@@ -1,11 +1,30 @@
+import os
+
 from airflow.plugins_manager import AirflowPlugin
-from airflow.www.api.experimental.endpoints import api_experimental, requires_authentication
+from airflow.settings import SQL_ALCHEMY_CONN
+from airflow.utils import db
+from airflow.www.api.experimental.endpoints import (
+    api_experimental,
+    requires_authentication,
+)
+from alembic import command
 from flask import jsonify
 
 
 class DerivedDagApiPlugin(AirflowPlugin):
     name = "derived_dag_api"
     flask_blueprints = [api_experimental]
+
+    def on_load(*args, **kwargs):
+        from alembic.config import Config
+
+        print('Running migrations for derived dag api')
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        directory = os.path.join(current_dir, 'alembic')
+        config = Config(os.path.join(current_dir, 'alembic.ini'))
+        config.set_main_option('script_location', directory.replace('%', '%%'))
+        config.set_main_option('sqlalchemy.url', SQL_ALCHEMY_CONN.replace('%', '%%'))
+        command.upgrade(config, 'heads')
 
 
 @api_experimental.route('/derived-dags/test', methods=['GET'])
