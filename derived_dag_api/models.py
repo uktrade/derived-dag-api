@@ -16,7 +16,7 @@ class DerivedPipelines(Base):
     __tablename__ = 'derived_pipelines'
 
     id = sa.Column(sa.Integer, primary_key=True)
-    dag_id = sa.Column(sa.String(length=255))
+    dag_id = sa.Column(sa.String(length=255), unique=True)
     type = sa.Column(
         sa.Enum(DerivedPipelineTypes),
         nullable=False,

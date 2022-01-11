@@ -1,5 +1,4 @@
 import os
-import sys
 from logging.config import fileConfig
 
 from airflow.models import Base
