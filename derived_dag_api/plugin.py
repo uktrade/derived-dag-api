@@ -2,7 +2,6 @@ import os
 
 from airflow.plugins_manager import AirflowPlugin
 from airflow.settings import SQL_ALCHEMY_CONN
-from airflow.utils import db
 from airflow.www.api.experimental.endpoints import (
     api_experimental,
     requires_authentication,
