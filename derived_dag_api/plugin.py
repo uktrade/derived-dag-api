@@ -14,9 +14,9 @@ from alembic import command
 from flask import abort, current_app, jsonify, request
 from sqlalchemy.exc import IntegrityError
 
-from plugins.derived_dag_api.models import DerivedPipelines
-from plugins.derived_dag_api.schemas import DerivedDagInputSchema
-from plugins.derived_dag_api.utils import bad_request_response, collect_dags
+from .models import DerivedPipelines
+from .schemas import DerivedDagInputSchema
+from .utils import bad_request_response, collect_dags
 
 derived_dag_schema = DerivedDagInputSchema()
 
