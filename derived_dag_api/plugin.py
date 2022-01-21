@@ -25,19 +25,19 @@ class DerivedDagApiPlugin(AirflowPlugin):
     name = "derived_dag_api"
     flask_blueprints = [api_experimental]
 
-    # def on_load(*args, **kwargs):
-    #     from alembic.config import Config
-    #
-    #     print('Running migrations for derived dag api')
-    #     current_dir = os.path.dirname(os.path.abspath(__file__))
-    #     print(f"Current dir is {current_dir}")
-    #     directory = os.path.join(current_dir, 'alembic')
-    #     print(f"Director is {current_dir}")
-    #     config = Config(os.path.join(current_dir, 'alembic.ini'))
-    #     print('Alembic config', config)
-    #     config.set_main_option('script_location', directory.replace('%', '%%'))
-    #     config.set_main_option('sqlalchemy.url', SQL_ALCHEMY_CONN.replace('%', '%%'))
-    #     command.upgrade(config, 'heads')
+    def on_load(*args, **kwargs):
+        from alembic.config import Config
+
+        print('Running migrations for derived dag api')
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        print(f"Current dir is {current_dir}")
+        directory = os.path.join(current_dir, 'alembic')
+        print(f"Director is {current_dir}")
+        config = Config(os.path.join(current_dir, 'alembic.ini'))
+        print('Alembic config', config)
+        config.set_main_option('script_location', directory.replace('%', '%%'))
+        config.set_main_option('sqlalchemy.url', SQL_ALCHEMY_CONN.replace('%', '%%'))
+        command.upgrade(config, 'heads')
 
 
 @api_experimental.route('/derived-dags/test', methods=['GET'])
