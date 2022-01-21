@@ -69,6 +69,7 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
+    print('**** Custom env script migrations are running')
     # https://alembic.sqlalchemy.org/en/latest/cookbook.html#don-t-generate-empty-migrations-with-autogenerate
     def process_revision_directives(context, revision, directives):
         if config.cmd_opts.autogenerate:

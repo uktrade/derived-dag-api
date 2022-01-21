@@ -37,7 +37,9 @@ class DerivedDagApiPlugin(AirflowPlugin):
         print('Alembic config', vars(config))
         config.set_main_option('script_location', alembic_dir.replace('%', '%%'))
         config.set_main_option('sqlalchemy.url', SQL_ALCHEMY_CONN.replace('%', '%%'))
+        print('** Running upgrade')
         command.upgrade(config, 'e4bbb5a200bb')
+        print('** Upgrade completed')
 
 
 @api_experimental.route('/derived-dags/test', methods=['GET'])
