@@ -1,5 +1,6 @@
 import os
 from logging.config import fileConfig
+from pprint import pprint
 
 from airflow.models import Base
 from alembic import context
@@ -27,6 +28,7 @@ schema_name = "derived_dags_plugin"
 
 
 def include_object(object_, name, type_, reflected, compare_to):
+    print(f"*** Include object: ", name, object_.schema)
     if type_ == 'table' and object_.schema != schema_name:
         return False
 
