@@ -21,7 +21,7 @@ def upgrade():
     op.create_table(
         'derived_pipelines',
         sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('dag_id', sa.String(length=255), nullable=True),
+        sa.Column('dag_id', sa.String(length=255), nullable=True, unique=True),
         sa.Column('type', sa.Enum('sql', name='derivedpipelinetypes'), nullable=False),
         sa.Column('schedule', sa.String(length=50), nullable=True),
         sa.Column('schema_name', sa.String(length=63), nullable=False),
