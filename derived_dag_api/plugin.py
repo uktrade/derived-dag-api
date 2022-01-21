@@ -30,7 +30,9 @@ class DerivedDagApiPlugin(AirflowPlugin):
 
         print('Running migrations for derived dag api')
         current_dir = os.path.dirname(os.path.abspath(__file__))
+        print(f"Current dir is {current_dir}")
         directory = os.path.join(current_dir, 'alembic')
+        print(f"Director is {current_dir}")
         config = Config(os.path.join(current_dir, 'alembic.ini'))
         config.set_main_option('script_location', directory.replace('%', '%%'))
         config.set_main_option('sqlalchemy.url', SQL_ALCHEMY_CONN.replace('%', '%%'))
