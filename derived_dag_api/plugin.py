@@ -6,6 +6,7 @@ from airflow.plugins_manager import AirflowPlugin
 from airflow.settings import SQL_ALCHEMY_CONN
 from airflow.utils.log.log_reader import TaskLogReader
 from airflow.utils.session import provide_session
+from airflow.utils.state import DagRunState
 from airflow.www.api.experimental.endpoints import (
     api_experimental,
     requires_authentication,
@@ -144,3 +145,18 @@ def derived_dags_dags(session):
             }) if last_run is not None else None
         }
     return jsonify(response)
+
+
+@api_experimental.route('/derived-dags/dag/<string:dag_id>/stop', methods=['POST'])
+@requires_authentication
+@provide_session
+def derived_dags_dag_stop(dag_id, session):
+    dag = session.query(DerivedPipelines).filter(DerivedPipelines.dag_id == dag_id).first()
+    if dag is None:
+        abort(bad_request_response(f"No DAG exists with the id '{dag_id}", NOT_FOUND))
+    dag = DagModel.get_current(dag_id)
+    last_run = dag.get_last_dagrun(session=session, include_externally_triggered=True)
+    if last_run is None:
+        return jsonify(status=f"No running tasks for DAG '{dag_id}'")
+    last_run.set_state(DagRunState.FAILED)
+    return jsonify(status=f"DAG '{dag_id}' stopped successfully")
