@@ -115,3 +115,32 @@ def derived_dags_dag_log(dag_id, session):
                 )[0][0]
             })
     return jsonify(log_data)
+
+
+@api_experimental.route('/derived-dags/dags', methods=['GET'])
+@requires_authentication
+@provide_session
+def derived_dags_dags(session):
+    """
+    Returns details and last run status for all non-deleted derived dags
+    """
+    response = {}
+    for derived_dag in session.query(DerivedPipelines).filter(DerivedPipelines.deleted == False):
+        dag = DagModel.get_current(derived_dag.dag_id)
+        last_run = dag.get_last_dagrun(session=session, include_externally_triggered=True)
+        response[derived_dag.dag_id] = {
+            "type": derived_dag.type.value,
+            "schedule": derived_dag.schedule,
+            "schema_name": derived_dag.schema_name,
+            "table_name": derived_dag.table_name,
+            "enabled": derived_dag.enabled,
+            "last_run": ({
+                "run_type": last_run.run_type,
+                "queued_at": last_run.queued_at,
+                "execution_date": last_run.execution_date,
+                "start_date": last_run.start_date,
+                "end_date": last_run.end_date,
+                "state": last_run.get_state(),
+            }) if last_run is not None else None
+        }
+    return jsonify(response)
