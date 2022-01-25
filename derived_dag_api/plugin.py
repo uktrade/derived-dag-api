@@ -15,10 +15,9 @@ from alembic import command
 from flask import abort, current_app, jsonify, request
 from sqlalchemy.exc import IntegrityError
 
-# FIXME
-from derived_dag_api.models import DerivedPipelines
-from derived_dag_api.schemas import DerivedDagInputSchema
-from derived_dag_api.utils import bad_request_response, collect_dags
+from .models import DerivedPipelines
+from .schemas import DerivedDagInputSchema
+from .utils import bad_request_response, collect_dags
 
 derived_dag_schema = DerivedDagInputSchema()
 
@@ -155,10 +154,11 @@ def derived_dags_dags(session):
 @requires_authentication
 @provide_session
 def derived_dags_dag_stop(dag_id, session):
-    dag = session.query(DerivedPipelines).filter(DerivedPipelines.dag_id == dag_id).first()
-    if dag is None:
+    if not session.query(DerivedPipelines).filter(DerivedPipelines.dag_id == dag_id).first():
         abort(bad_request_response(f"No DAG exists with the id '{dag_id}", NOT_FOUND))
     dag = DagModel.get_current(dag_id)
+    if dag is None:
+        return jsonify(status=f"No enabled DAG with '{dag_id}'")
     last_run = dag.get_last_dagrun(session=session, include_externally_triggered=True)
     if last_run is None:
         return jsonify(status=f"No running tasks for DAG '{dag_id}'")
