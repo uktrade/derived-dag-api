@@ -15,9 +15,10 @@ from alembic import command
 from flask import abort, current_app, jsonify, request
 from sqlalchemy.exc import IntegrityError
 
-from .models import DerivedPipelines
-from .schemas import DerivedDagInputSchema
-from .utils import bad_request_response, collect_dags
+# FIXME
+from derived_dag_api.models import DerivedPipelines
+from derived_dag_api.schemas import DerivedDagInputSchema
+from derived_dag_api.utils import bad_request_response, collect_dags
 
 derived_dag_schema = DerivedDagInputSchema()
 
@@ -128,7 +129,10 @@ def derived_dags_dags(session):
     response = {}
     for derived_dag in session.query(DerivedPipelines).filter(DerivedPipelines.deleted == False):
         dag = DagModel.get_current(derived_dag.dag_id)
-        last_run = dag.get_last_dagrun(session=session, include_externally_triggered=True)
+        last_run = (
+           dag.get_last_dagrun(session=session, include_externally_triggered=True)
+           if dag is not None else None
+        )
         response[derived_dag.dag_id] = {
             "type": derived_dag.type.value,
             "schedule": derived_dag.schedule,
