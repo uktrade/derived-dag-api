@@ -36,6 +36,7 @@ class DerivedDagApiPlugin(AirflowPlugin):
         config.set_main_option('script_location', directory.replace('%', '%%'))
         config.set_main_option('sqlalchemy.url', SQL_ALCHEMY_CONN.replace('%', '%%'))
         command.upgrade(config, 'heads')
+        print('Finished running migrations')
 
 
 @api_experimental.route('/derived-dags/test', methods=['GET'])
