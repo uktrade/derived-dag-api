@@ -29,3 +29,4 @@ class DerivedPipelines(Base):
     deleted = sa.Column(sa.Boolean, default=False)
     created = sa.Column(sa.DateTime, default=datetime.now)
     modified = sa.Column(sa.DateTime, onupdate=datetime.now)
+    use_named_cursor = sa.Column(sa.Boolean, default=True)
