@@ -58,7 +58,7 @@ def derived_dags_dag(dag_id, session):
     if request.method == "DELETE":
         dag.deleted = True
         session.commit()
-        collect_dags(current_app)
+        collect_dags()
         return jsonify(status=f"DAG '{dag_id}' deleted successfully")
 
     data = request.get_json(force=True)
@@ -83,7 +83,7 @@ def derived_dags_dag(dag_id, session):
                 "Integrity error: Check that the DAG ID doesn't already exist"
             )
         )
-    collect_dags(current_app)
+    collect_dags()
     return jsonify(
         status=f"DAG {dag_id} {'updated' if dag_exists else 'created'} successfully"
     )
