@@ -33,3 +33,4 @@ def collect_dags(current_app):
         include_smart_sensor=False,
         safe_mode=False,
     )
+    current_app.dag_bag.sync_to_db()
