@@ -1,10 +1,12 @@
 import os
 from http.client import NOT_FOUND
 
+from airflow.config_templates.airflow_local_settings import FILENAME_TEMPLATE
+from airflow.configuration import conf
 from airflow.models import DagModel
 from airflow.plugins_manager import AirflowPlugin
+from airflow.providers.amazon.aws.log.s3_task_handler import S3TaskHandler
 from airflow.settings import SQL_ALCHEMY_CONN
-from airflow.utils.log.log_reader import TaskLogReader
 from airflow.utils.session import provide_session
 from airflow.utils.state import DagRunState
 from airflow.www.api.experimental.endpoints import (
@@ -104,17 +106,21 @@ def derived_dags_dag_log(dag_id, session):
     if last_run is None:
         return jsonify(logs=[])
 
-    task_log_reader = TaskLogReader()
+    task_handler = S3TaskHandler(
+        conf.get("logging", "BASE_LOG_FOLDER"),
+        conf.get("logging", "REMOTE_BASE_LOG_FOLDER"),
+        FILENAME_TEMPLATE
+    )
     log_data = []
     for ti in last_run.get_task_instances():
         if ti.start_date is not None:
             log_data.append({
                 "task_id": ti.task_id,
-                "logs": task_log_reader.read_log_chunks(
+                "logs": task_handler._read(
                     ti,
-                    try_number=ti.try_number,
+                    try_number=ti.try_number - 1,
                     metadata={},
-                )[0][0]
+                )[0].splitlines()
             })
     return jsonify(log_data)
 
