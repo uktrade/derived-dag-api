@@ -12,7 +12,7 @@ from airflow.www.api.experimental.endpoints import (
     requires_authentication,
 )
 from alembic import command
-from flask import abort, current_app, jsonify, request
+from flask import abort, jsonify, request
 from sqlalchemy.exc import IntegrityError
 
 from .models import DerivedPipelines
@@ -139,6 +139,7 @@ def derived_dags_dags(session):
             "schema_name": derived_dag.schema_name,
             "table_name": derived_dag.table_name,
             "enabled": derived_dag.enabled,
+            "in_dagbag": dag is not None,
             "last_run": ({
                 "run_type": last_run.run_type,
                 "queued_at": last_run.queued_at,
