@@ -118,7 +118,7 @@ def derived_dags_dag_log(dag_id, session):
                 "task_id": ti.task_id,
                 "logs": task_handler._read(
                     ti,
-                    try_number=ti.try_number,
+                    try_number=ti.try_number - 1,
                     metadata={},
                 )[0].splitlines()
             })
