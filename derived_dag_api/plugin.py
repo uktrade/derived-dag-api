@@ -6,7 +6,6 @@ from airflow.configuration import conf
 from airflow.models import DagModel
 from airflow.plugins_manager import AirflowPlugin
 from airflow.providers.amazon.aws.log.s3_task_handler import S3TaskHandler
-from airflow.settings import SQL_ALCHEMY_CONN
 from airflow.utils.session import provide_session
 from airflow.utils.state import DagRunState
 from airflow.www.api.experimental.endpoints import (
@@ -27,18 +26,6 @@ derived_dag_schema = DerivedDagInputSchema()
 class DerivedDagApiPlugin(AirflowPlugin):
     name = "derived_dag_api"
     flask_blueprints = [api_experimental]
-
-    def on_load(*args, **kwargs):
-        from alembic.config import Config
-
-        print('Running migrations for derived dag api')
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        directory = os.path.join(current_dir, 'alembic')
-        config = Config(os.path.join(current_dir, 'alembic.ini'))
-        config.set_main_option('script_location', directory.replace('%', '%%'))
-        config.set_main_option('sqlalchemy.url', SQL_ALCHEMY_CONN.replace('%', '%%'))
-        command.upgrade(config, 'heads')
-        print('Finished running migrations')
 
 
 @api_experimental.route('/derived-dags/test', methods=['GET'])
