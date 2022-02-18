@@ -1,25 +1,24 @@
 import os
 from http.client import NOT_FOUND
 
+import psycopg2
 from airflow.config_templates.airflow_local_settings import FILENAME_TEMPLATE
 from airflow.configuration import conf
 from airflow.models import DagModel
 from airflow.plugins_manager import AirflowPlugin
 from airflow.providers.amazon.aws.log.s3_task_handler import S3TaskHandler
-from airflow.settings import SQL_ALCHEMY_CONN
 from airflow.utils.session import provide_session
 from airflow.utils.state import DagRunState
 from airflow.www.api.experimental.endpoints import (
     api_experimental,
     requires_authentication,
 )
-from alembic import command
 from flask import abort, jsonify, request
 from sqlalchemy.exc import IntegrityError
 
 from .models import DerivedPipelines
 from .schemas import DerivedDagInputSchema
-from .utils import bad_request_response, collect_dags
+from .utils import bad_request_response, collect_dags, get_database_uri
 
 derived_dag_schema = DerivedDagInputSchema()
 
@@ -29,16 +28,15 @@ class DerivedDagApiPlugin(AirflowPlugin):
     flask_blueprints = [api_experimental]
 
     def on_load(*args, **kwargs):
-        from alembic.config import Config
-
-        print('Running migrations for derived dag api')
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        directory = os.path.join(current_dir, 'alembic')
-        config = Config(os.path.join(current_dir, 'alembic.ini'))
-        config.set_main_option('script_location', directory.replace('%', '%%'))
-        config.set_main_option('sqlalchemy.url', SQL_ALCHEMY_CONN.replace('%', '%%'))
-        command.upgrade(config, 'heads')
-        print('Finished running migrations')
+        print('Initialising tables for derived dag api')
+        sql_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'db-init.sql')
+        with psycopg2.connect(get_database_uri()) as conn, conn.cursor(
+                cursor_factory=psycopg2.extras.RealDictCursor
+        ) as cursor:
+            with open(sql_file) as fh:
+                query = fh.read()
+                cursor.execute(query)
+        print('Finished initialising derived dag api tables')
 
 
 @api_experimental.route('/derived-dags/test', methods=['GET'])
