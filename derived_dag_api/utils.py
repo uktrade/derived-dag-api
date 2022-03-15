@@ -5,6 +5,8 @@ from urllib.parse import urlparse
 from airflow.models import DagBag
 from flask import jsonify, make_response
 
+from .models import DerivedPipelines
+
 
 def get_database_uri():
     parsed_uri = urlparse(os.environ['AIRFLOW__CORE__SQL_ALCHEMY_CONN'])
@@ -27,3 +29,7 @@ def collect_dags():
     dag_bag = DagBag()
     dag_bag.sync_to_db()
     print("Finished collecting and syncing dags")
+
+
+def derived_dag_exists(session, dag_id):
+    return session.query(DerivedPipelines).filter(DerivedPipelines.dag_id == dag_id).first() is not None
