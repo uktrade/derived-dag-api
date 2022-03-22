@@ -4,7 +4,7 @@ from http.client import NOT_FOUND
 import psycopg2
 from airflow.config_templates.airflow_local_settings import FILENAME_TEMPLATE
 from airflow.configuration import conf
-from airflow.models import DagModel
+from airflow.models import DagModel, clear_task_instances
 from airflow.plugins_manager import AirflowPlugin
 from airflow.providers.amazon.aws.log.s3_task_handler import S3TaskHandler
 from airflow.utils.session import provide_session
@@ -18,7 +18,12 @@ from sqlalchemy.exc import IntegrityError
 
 from .models import DerivedPipelines
 from .schemas import DerivedDagInputSchema
-from .utils import bad_request_response, collect_dags, get_database_uri
+from .utils import (
+    bad_request_response,
+    collect_dags,
+    derived_dag_exists,
+    get_database_uri,
+)
 
 derived_dag_schema = DerivedDagInputSchema()
 
@@ -156,11 +161,28 @@ def derived_dags_dags(session):
     return jsonify(response)
 
 
+@api_experimental.route('/derived-dags/dag/<string:dag_id>/run', methods=['POST'])
+@requires_authentication
+@provide_session
+def derived_dags_dag_run(dag_id, session):
+    if not derived_dag_exists(session, dag_id):
+        abort(bad_request_response(f"No DAG exists with the id '{dag_id}", NOT_FOUND))
+    dag = DagModel.get_current(dag_id)
+    if dag is None:
+        return jsonify(status=f"No enabled DAG with '{dag_id}'")
+    last_run = dag.get_last_dagrun(session=session, include_externally_triggered=True)
+    if last_run is None:
+        return jsonify(status=f"DAG has not run yet. Please wait until the first run has completed")
+    task_instances = last_run.get_task_instances()
+    clear_task_instances(task_instances, session)
+    return jsonify(status=f"DAG '{dag_id}' started successfully")
+
+
 @api_experimental.route('/derived-dags/dag/<string:dag_id>/stop', methods=['POST'])
 @requires_authentication
 @provide_session
 def derived_dags_dag_stop(dag_id, session):
-    if not session.query(DerivedPipelines).filter(DerivedPipelines.dag_id == dag_id).first():
+    if not derived_dag_exists(session, dag_id):
         abort(bad_request_response(f"No DAG exists with the id '{dag_id}", NOT_FOUND))
     dag = DagModel.get_current(dag_id)
     if dag is None:
