@@ -3,6 +3,8 @@ from marshmallow import Schema, fields
 
 class ConfigSchema(Schema):
     sql = fields.Str(required=False)
+    site_name = fields.Str(required=False)
+    list_name = fields.Str(required=False)
 
 
 class DerivedDagInputSchema(Schema):

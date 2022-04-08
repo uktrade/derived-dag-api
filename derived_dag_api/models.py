@@ -10,6 +10,7 @@ Base = declarative_base(metadata=sa.MetaData(schema="derived_dags_plugin"))
 
 class DerivedPipelineTypes(enum.Enum):
     sql = 'sql'
+    sharepoint = 'sharepoint'
 
 
 class DerivedPipelines(Base):
