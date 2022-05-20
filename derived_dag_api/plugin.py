@@ -155,7 +155,7 @@ def derived_dags_dags(session):
                 "execution_date": last_run.execution_date,
                 "start_date": last_run.start_date,
                 "end_date": last_run.end_date,
-                "state": last_run.get_state(),
+                "state": last_run.get_task_instance("swap-dataset-table-datasets_db").current_state(session),
             }) if last_run is not None else None
         }
     return jsonify(response)
