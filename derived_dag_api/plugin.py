@@ -2,11 +2,14 @@ import os
 from http.client import NOT_FOUND
 
 import psycopg2
+from airflow.api.common.experimental import check_and_get_dag, check_and_get_dagrun
 from airflow.config_templates.airflow_local_settings import FILENAME_TEMPLATE
 from airflow.configuration import conf
+from airflow.exceptions import DagRunNotFound
 from airflow.models import DagModel, clear_task_instances
 from airflow.plugins_manager import AirflowPlugin
 from airflow.providers.amazon.aws.log.s3_task_handler import S3TaskHandler
+from airflow.utils import timezone
 from airflow.utils.session import provide_session
 from airflow.utils.state import DagRunState
 from airflow.www.api.experimental.endpoints import (
@@ -126,6 +129,51 @@ def derived_dags_dag_log(dag_id, session):
                 )[0].splitlines()
             })
     return jsonify(log_data)
+
+
+@api_experimental.route(
+    '/derived-dags/dag/<string:dag_id>/<string:execution_date>/<string:task_id>/log',
+    methods=['GET']
+)
+@requires_authentication
+@provide_session
+def derived_dags_task_log(dag_id, execution_date, task_id, session):
+    """
+    Returns the log for a single task of a DAG run at `execution_date`
+    """
+    dag = check_and_get_dag(dag_id=dag_id)
+    if dag is None:
+        abort(bad_request_response(f"No DAG exists with the id '{dag_id}'", NOT_FOUND))
+
+    try:
+        execution_date = timezone.parse(execution_date)
+    except ValueError:
+        abort(bad_request_response("Invalid execution date"))
+
+    try:
+        dag_run = check_and_get_dagrun(dag, execution_date)
+    except DagRunNotFound:
+        abort(bad_request_response(f"No dag run found for execution date {execution_date}", NOT_FOUND))
+
+    task_instance = dag_run.get_task_instance(task_id)
+
+    if task_instance is None:
+        abort(bad_request_response(f"No task instance exists with id {task_id}", NOT_FOUND))
+
+    task_handler = S3TaskHandler(
+        conf.get("logging", "BASE_LOG_FOLDER"),
+        conf.get("logging", "REMOTE_BASE_LOG_FOLDER"),
+        FILENAME_TEMPLATE
+    )
+
+    return jsonify({
+        "state": task_instance.state,
+        "log": task_handler._read(
+            task_instance,
+            try_number=task_instance.try_number - 1,
+            metadata={},
+        )[0]
+    })
 
 
 @api_experimental.route('/derived-dags/dags', methods=['GET'])
