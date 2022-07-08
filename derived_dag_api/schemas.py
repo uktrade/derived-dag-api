@@ -5,6 +5,7 @@ class ConfigSchema(Schema):
     sql = fields.Str(required=False)
     site_name = fields.Str(required=False)
     list_name = fields.Str(required=False)
+    dataset = fields.UUID(required=False)
 
 
 class DerivedDagInputSchema(Schema):
@@ -19,7 +20,7 @@ class DerivedDagInputSchema(Schema):
     """
     type = fields.Str(required=True)
     schedule = fields.Str(required=True)
-    schema_name = fields.Str(required=True)
+    schema_name = fields.Str(required=False, allow_none=True)
     table_name = fields.Str(required=True)
     config = fields.Nested(ConfigSchema, required=True)
     enabled = fields.Bool(required=False, default=True)

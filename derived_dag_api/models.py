@@ -11,6 +11,7 @@ Base = declarative_base(metadata=sa.MetaData(schema="derived_dags_plugin"))
 class DerivedPipelineTypes(enum.Enum):
     sql = 'sql'
     sharepoint = 'sharepoint'
+    scheduled_report = 'scheduled-report'
 
 
 class DerivedPipelines(Base):
@@ -23,7 +24,7 @@ class DerivedPipelines(Base):
         nullable=False,
     )
     schedule = sa.Column(sa.String(length=50))
-    schema_name = sa.Column(sa.String(length=63), nullable=False)
+    schema_name = sa.Column(sa.String(length=63), nullable=True)
     table_name = sa.Column(sa.String(length=63), nullable=False)
     config = sa.Column(JSONB, nullable=False)
     enabled = sa.Column(sa.Boolean, default=False)

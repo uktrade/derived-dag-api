@@ -13,3 +13,4 @@ create table if not exists derived_dags_plugin.derived_pipelines
     created timestamp,
     modified timestamp
 );
+alter table derived_dags_plugin.derived_pipelines alter column schema_name drop not null;
