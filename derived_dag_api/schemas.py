@@ -6,6 +6,7 @@ class ConfigSchema(Schema):
     site_name = fields.Str(required=False)
     list_name = fields.Str(required=False)
     dataset = fields.UUID(required=False)
+    refresh_type = fields.Str(required=False)
 
 
 class DerivedDagInputSchema(Schema):
