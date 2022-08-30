@@ -16,7 +16,7 @@ from airflow.www.api.experimental.endpoints import (
     api_experimental,
     requires_authentication,
 )
-from flask import abort, jsonify, request
+from flask import abort, jsonify, request, Blueprint
 from sqlalchemy.exc import IntegrityError
 
 from .models import DerivedPipelines
@@ -30,10 +30,12 @@ from .utils import (
 
 derived_dag_schema = DerivedDagInputSchema()
 
+bp = Blueprint('derived_dag_experimental_api', __name__)
+
 
 class DerivedDagApiPlugin(AirflowPlugin):
     name = "derived_dag_api"
-    flask_blueprints = [api_experimental]
+    flask_blueprints = [bp]
 
     def on_load(*args, **kwargs):
         print('Initialising tables for derived dag api')
