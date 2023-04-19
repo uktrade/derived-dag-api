@@ -39,9 +39,11 @@ class DerivedDagApiPlugin(AirflowPlugin):
 
     def on_load(*args, **kwargs):
         print('Initialising tables for derived dag api')
-        sql_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'db-init.sql')
+        sql_file = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), 'db-init.sql'
+        )
         with psycopg2.connect(get_database_uri()) as conn, conn.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor
+            cursor_factory=psycopg2.extras.RealDictCursor
         ) as cursor:
             with open(sql_file) as fh:
                 query = fh.read()
@@ -55,11 +57,17 @@ def derived_dags_test():
     return jsonify(status="Derived dags plugin loaded OK")
 
 
-@api_experimental.route('/derived-dags/dag/<string:dag_id>', methods=['DELETE', 'POST', 'PUT'])
+@api_experimental.route(
+    '/derived-dags/dag/<string:dag_id>', methods=['DELETE', 'POST', 'PUT']
+)
 @requires_authentication
 @provide_session
 def derived_dags_dag(dag_id, session):
-    dag = session.query(DerivedPipelines).filter(DerivedPipelines.dag_id == dag_id).first()
+    dag = (
+        session.query(DerivedPipelines)
+        .filter(DerivedPipelines.dag_id == dag_id)
+        .first()
+    )
     dag_exists = dag is not None
 
     if request.method in ["DELETE", "PUT"] and not dag_exists:
@@ -117,25 +125,27 @@ def derived_dags_dag_log(dag_id, session):
     task_handler = S3TaskHandler(
         conf.get("logging", "BASE_LOG_FOLDER"),
         conf.get("logging", "REMOTE_BASE_LOG_FOLDER"),
-        FILENAME_TEMPLATE
+        FILENAME_TEMPLATE,
     )
     log_data = []
     for ti in last_run.get_task_instances():
         if ti.start_date is not None:
-            log_data.append({
-                "task_id": ti.task_id,
-                "logs": task_handler._read(
-                    ti,
-                    try_number=ti.try_number - 1,
-                    metadata={},
-                )[0].splitlines()
-            })
+            log_data.append(
+                {
+                    "task_id": ti.task_id,
+                    "logs": task_handler._read(
+                        ti,
+                        try_number=ti.try_number - 1,
+                        metadata={},
+                    )[0].splitlines(),
+                }
+            )
     return jsonify(log_data)
 
 
 @api_experimental.route(
     '/derived-dags/dag/<string:dag_id>/<string:execution_date>/<string:task_id>/log',
-    methods=['GET']
+    methods=['GET'],
 )
 @requires_authentication
 @provide_session
@@ -155,27 +165,37 @@ def derived_dags_task_log(dag_id, execution_date, task_id, session):
     try:
         dag_run = check_and_get_dagrun(dag, execution_date)
     except DagRunNotFound:
-        abort(bad_request_response(f"No dag run found for execution date {execution_date}", NOT_FOUND))
+        abort(
+            bad_request_response(
+                f"No dag run found for execution date {execution_date}", NOT_FOUND
+            )
+        )
 
     task_instance = dag_run.get_task_instance(task_id)
 
     if task_instance is None:
-        abort(bad_request_response(f"No task instance exists with id {task_id}", NOT_FOUND))
+        abort(
+            bad_request_response(
+                f"No task instance exists with id {task_id}", NOT_FOUND
+            )
+        )
 
     task_handler = S3TaskHandler(
         conf.get("logging", "BASE_LOG_FOLDER"),
         conf.get("logging", "REMOTE_BASE_LOG_FOLDER"),
-        FILENAME_TEMPLATE
+        FILENAME_TEMPLATE,
     )
 
-    return jsonify({
-        "state": task_instance.state,
-        "log": task_handler._read(
-            task_instance,
-            try_number=task_instance.try_number - 1,
-            metadata={},
-        )[0]
-    })
+    return jsonify(
+        {
+            "state": task_instance.state,
+            "log": task_handler._read(
+                task_instance,
+                try_number=task_instance.try_number - 1,
+                metadata={},
+            )[0],
+        }
+    )
 
 
 @api_experimental.route('/derived-dags/dags', methods=['GET'])
@@ -186,11 +206,14 @@ def derived_dags_dags(session):
     Returns details and last run status for all non-deleted derived dags
     """
     response = {}
-    for derived_dag in session.query(DerivedPipelines).filter(DerivedPipelines.deleted == False):
+    for derived_dag in session.query(DerivedPipelines).filter(
+        DerivedPipelines.deleted == False
+    ):
         dag = DagModel.get_current(derived_dag.dag_id)
         last_run = (
-           dag.get_last_dagrun(session=session, include_externally_triggered=True)
-           if dag is not None else None
+            dag.get_last_dagrun(session=session, include_externally_triggered=True)
+            if dag is not None
+            else None
         )
         response[derived_dag.dag_id] = {
             "type": derived_dag.type.value,
@@ -199,14 +222,20 @@ def derived_dags_dags(session):
             "table_name": derived_dag.table_name,
             "enabled": derived_dag.enabled,
             "in_dagbag": dag is not None,
-            "last_run": ({
-                "run_type": last_run.run_type,
-                "queued_at": last_run.queued_at,
-                "execution_date": last_run.execution_date,
-                "start_date": last_run.start_date,
-                "end_date": last_run.end_date,
-                "state": last_run.get_task_instance("swap-dataset-table-datasets_db").current_state(session),
-            }) if last_run is not None else None
+            "last_run": (
+                {
+                    "run_type": last_run.run_type,
+                    "queued_at": last_run.queued_at,
+                    "execution_date": last_run.execution_date,
+                    "start_date": last_run.start_date,
+                    "end_date": last_run.end_date,
+                    "state": last_run.get_task_instance(
+                        "swap-dataset-table-datasets_db"
+                    ).current_state(session),
+                }
+            )
+            if last_run is not None
+            else None,
         }
     return jsonify(response)
 
@@ -222,7 +251,9 @@ def derived_dags_dag_run(dag_id, session):
         return jsonify(status=f"No enabled DAG with '{dag_id}'")
     last_run = dag.get_last_dagrun(session=session, include_externally_triggered=True)
     if last_run is None:
-        return jsonify(status=f"DAG has not run yet. Please wait until the first run has completed")
+        return jsonify(
+            status=f"DAG has not run yet. Please wait until the first run has completed"
+        )
     task_instances = last_run.get_task_instances()
     clear_task_instances(task_instances, session)
     return jsonify(status=f"DAG '{dag_id}' started successfully")
