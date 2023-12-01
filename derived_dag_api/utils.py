@@ -9,7 +9,7 @@ from .models import DerivedPipelines
 
 
 def get_database_uri():
-    parsed_uri = urlparse(os.environ['AIRFLOW__CORE__SQL_ALCHEMY_CONN'])
+    parsed_uri = urlparse(os.environ['AIRFLOW__DATABASE__SQL_ALCHEMY_CONN'])
     host, port, dbname, user, password = (
         parsed_uri.hostname,
         parsed_uri.port or 5432,

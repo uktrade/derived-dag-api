@@ -63,7 +63,7 @@ def generate_dags():
     Loop through all enabled, non-deleted derived_pipeline records and generate
     DAGs for them dynamically.
     """
-    parsed_uri = urlparse(os.environ['AIRFLOW__CORE__SQL_ALCHEMY_CONN'])
+    parsed_uri = urlparse(os.environ['AIRFLOW__DATABASE__SQL_ALCHEMY_CONN'])
     host, port, dbname, user, password = (
         parsed_uri.hostname,
         parsed_uri.port or 5432,
